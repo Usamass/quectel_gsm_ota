@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "file_system.h": "c",
+        "esp_https_ota.h": "c"
+    }
+}
