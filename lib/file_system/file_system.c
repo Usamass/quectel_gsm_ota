@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/unistd.h>
-#include <sys/stat.h>
-#include "esp_err.h"
-#include "esp_log.h"
-#include "esp_spiffs.h"
 #include "file_system.h"
 
 static const char* SPIFFS_TAG = "file_system";
