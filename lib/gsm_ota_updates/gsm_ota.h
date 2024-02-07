@@ -10,9 +10,10 @@
 
 typedef enum 
 {
-    CONNECT = 0,
-    DISCONNECT,
-    STAT
+    // OPEN_TCP_COMMAND,
+    SET_URL_COMMAND,
+    GET_REQUEST_COMMAND,
+    READ_RESPONSE_COMMAND
 
 }Quectel_command;
 
@@ -43,7 +44,7 @@ typedef struct
 
 }gsm_spiffs_ota_partition_t;
 
-esp_err_t gsm_begin(); 
+void gsm_begin(gsm_ota_https_config_t*); 
 esp_err_t gsm_ota_begin(gsm_ota_https_config_t* , gsm_spiffs_ota_partition_t*);
 esp_err_t gsm_ota_perform(gsm_spiffs_ota_partition_t*);
 

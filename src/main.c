@@ -10,32 +10,31 @@
 #include "gsm_ota.h"
 
 
-// const esp_partition_t* running_partition;
-// const esp_partition_t* update_partition;
-// esp_ota_handle_t ota_firmware_handle = 0;  /* Handler for OTA update. */
+const esp_partition_t* running_partition;
+const esp_partition_t* update_partition;
+esp_ota_handle_t ota_firmware_handle = 0;  /* Handler for OTA update. */
 
 #define TAG "OTA_APP"
-// #define SEND_DATA 1024
+#define SEND_DATA 1024
 
-// static const char* FIRM_FILE = "/spiffs/ota_firmware.bin";
-// esp_https_ota_handle_t ota_handle;
+static const char* FIRM_FILE = "/spiffs/ota_firmware.bin";
+esp_https_ota_handle_t ota_handle;
 
 
 
 int data_read , ret;
 void app_main(void)
 {
-    // gsm_ota_client_config_t ota_client;
-    // gsm_ota_https_config_t ota_https;
+ 
+    gsm_ota_client_config_t ota_client = {
+        .url = "ota2.ismart.link/test_remote.bin",
+    };
 
-    // ota_client.url = "spiffs/url";
-    // ota_client.cert_pem = "";
-    // ota_client.timeout_ms = 30;
+    gsm_ota_https_config_t ota_https = {
+        .http_config = &ota_client,
+    };
 
-    // ota_https.http_config = &ota_client;
-    // ota_https.https_ota_handle = ota_handle;
-
-    gsm_begin();
+    gsm_begin(&ota_https);
 
 
 
@@ -96,6 +95,7 @@ void app_main(void)
     // ESP_LOGI(TAG, "Restarting...");
     // // REBOOT!!!!!
     // esp_restart();
+
 
 
     
