@@ -2,7 +2,9 @@
     "files.associations": {
         "file_system.h": "c",
         "esp_https_ota.h": "c",
-        "gsm_ota.h": "c"
+        "gsm_ota.h": "c",
+        "inttypes.h": "c",
+        "gsm_utils.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

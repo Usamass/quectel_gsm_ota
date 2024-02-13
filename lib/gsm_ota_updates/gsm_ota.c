@@ -5,6 +5,7 @@
 #include <freertos/task.h>
 #include <driver/gpio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 #define EX_UART_NUM UART_NUM_1
@@ -36,7 +37,8 @@ static const char* GSM_HTTPS_REQUESTS[] = {
     "AT+QHTTPURL=39,30\r\n",
     "AT+QHTTPGET=60\r\n",
     // "AT+QHTTPREAD=60\r\n",
-    "AT+QHTTPDL=\"test_remote.bin\",300000\r\n",
+    "AT+QHTTPDL=\"test_remote.bin\",270000\r\n",
+    "AT+QFLST=\"RAM:test_remote.bin\"\r\n",
     // "AT+QFOPEN=\"RAM:test_remote.bin\",0\r\n",
     // "AT+QFUPL=\"test_remote.bin\",300000\r\n",
     // "AT+QFLST=\"RAM:*\"\r\n",
@@ -63,14 +65,15 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
     // (char*)malloc(url_len +2);
     // sprintf(url_ptr , "%s\r\n" , url);
 
+    char url_buffer[50] = {0};
+
+    sprintf(url_buffer , "AT+QHTTPURL=%d,30\r\n" , strlen(url_ptr));
+
     uart_flush(EX_UART_NUM);
     vTaskDelay(pdMS_TO_TICKS(3000));
 
     uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[0] , 
                             strlen(GSM_HTTPS_REQUESTS[0]));
-
-
-   
 
    
     uart_flush(EX_UART_NUM);
@@ -83,22 +86,25 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
 
 
     uart_flush(EX_UART_NUM);
-    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[2] , 
-                            strlen(GSM_HTTPS_REQUESTS[2]));
+    uart_write_bytes(EX_UART_NUM , url_buffer , 
+                            strlen(url_buffer));
 
     uart_flush(EX_UART_NUM);
     vTaskDelay(pdMS_TO_TICKS(600));
 
     uart_write_bytes(EX_UART_NUM , url_ptr, strlen(url_ptr));
 
+    
+
     uart_flush(EX_UART_NUM);
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[3] , 
                             strlen(GSM_HTTPS_REQUESTS[3]));
 
+
     
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     uart_flush(EX_UART_NUM);
 
@@ -106,7 +112,7 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
                             strlen(GSM_HTTPS_REQUESTS[4]));
 
 
-    // vTaskDelay(pdMS_TO_TICKS(5000));
+    // vTaskDelay(pdMS_TO_TICKS(10000));
 
     // uart_flush(EX_UART_NUM);
 
@@ -155,6 +161,15 @@ static void uart_event_task(void *pvParameters)
           
             case UART_DATA:
                 uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
+                char* found = strstr((char*)dtmp , "+QHTTPDL:");
+                if (found != NULL) {
+
+                uart_flush(EX_UART_NUM);
+
+                uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[5] , 
+                                        strlen(GSM_HTTPS_REQUESTS[5]));
+                    printf("string found: %s\n" , found);
+                }
                 printf("[DATA SIZE: %d]\t[DATA ]: %s" ,event.size, (const char*)dtmp);
                 break;
             //Event of UART ring buffer full
@@ -204,10 +219,12 @@ static void _uart_init ()
 
     ESP_ERROR_CHECK(uart_param_config(EX_UART_NUM, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(EX_UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_driver_install(EX_UART_NUM, BUF_SIZE * 2, BUF_SIZE * 2, 5, &uart0_queue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(EX_UART_NUM, BUF_SIZE * 2, BUF_SIZE * 2, 0, NULL, 0));
+
+    // ESP_ERROR_CHECK(uart_driver_install(EX_UART_NUM, BUF_SIZE * 2, BUF_SIZE * 2, 5, &uart0_queue, 0));
 
 
-    xTaskCreate(uart_event_task, "uart_event_task", 2048, NULL, 12, NULL);
+    // xTaskCreate(uart_event_task, "uart_event_task", 2048, NULL, 12, NULL);
 
 
 
