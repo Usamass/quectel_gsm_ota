@@ -6,19 +6,20 @@
 #include <driver/gpio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 #define EX_UART_NUM UART_NUM_1
 #define TX_PIN GPIO_NUM_17
 #define RX_PIN GPIO_NUM_16
-#define BUF_SIZE 30000
+#define BUF_SIZE 2000
 #define RD_BUF_SIZE (BUF_SIZE)
 
-static QueueHandle_t uart0_queue;
+// static QueueHandle_t uart0_queue;
 static void _uart_init();
 
 
-static const char* GSM_HTTPS_REQUESTS[] = {
+static char* GSM_HTTPS_REQUESTS[] = {
     // "AT+QICSGP=1,1,\"JAZZ\",\"\",\"\",1\r\n",
     // "AT+QIACT=1\r\n",
     // "AT+QHTTPCFG=\"contextid\",1\r\n",
@@ -29,27 +30,33 @@ static const char* GSM_HTTPS_REQUESTS[] = {
     // "AT+QIDNSGIP=\"www.google.com\"\r\n",
     // "AT+QPING=\"www.google.com\"\r\n",
     // "AT+QFLDS=\"UFS\"\r\n",
+    "AT\r\n",
+    // "AT+QHTTPCFG =\"responseheader\",1\r\n",
     "AT+QIFGCNT=0\r\n",
     "AT+QICSGP=1,\"JAZZ\"\r\n",
-    // "AT+QHTTPCFG =\"responseheader\",1\r\n",
+    
     // "AT+QFLST=\"test_remote.bin\"\r\n",
     // "AT+QFDEL=\"test_remote.bin\"\r\n",
     "AT+QHTTPURL=39,30\r\n",
     "AT+QHTTPGET=60\r\n",
     // "AT+QHTTPREAD=60\r\n",
-    "AT+QHTTPDL=\"test_remote.bin\",270000\r\n",
-    "AT+QFLST=\"RAM:test_remote.bin\"\r\n",
-    // "AT+QFOPEN=\"RAM:test_remote.bin\",0\r\n",
+    "AT+QHTTPDL=\"RAM:ota_firmware.bin\",200000\r\n",
+    // "AT+QFLST=\"RAM:ota.bin\"\r\n",
+    
     // "AT+QFUPL=\"test_remote.bin\",300000\r\n",
     // "AT+QFLST=\"RAM:*\"\r\n",
+    "AT+QFLST=\"RAM:ota_remote.bin\"\r\n"
+    "AT+QFOPEN=\"RAM:ota_remote.bin\",0\r\n",
+    "AT+QFSEEK=134072,10254,1\r\n",
+    "AT+QFREAD=134072,1024\r\n",
+    "AT+QFCLOSE=134072\r\n",
+
 
     // "AT+QFLST=\"RAM:*\"\r\n",
 
     // "AT+QFUPL=\"ota.txt\",\"1024\"\r\n",
     
     // "AT+QHTTPDL=\"RAM:1.TXT\",1024",
-    
-
 
     NULL
 };
@@ -57,11 +64,26 @@ static const char* GSM_HTTPS_REQUESTS[] = {
 #define TAG "gsm_ota"
 void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the gsm for internet connection.
 {
+    printf("inside gsm begin function\n");
     _uart_init();
 
-    const char* url = gsm_ota->http_config->url;
-    size_t url_len = strlen(url);
-    char* url_ptr = "http://ota2.ismart.link/test_remote.bin";
+    
+    uint8_t* data = (uint8_t*)malloc(BUF_SIZE);
+
+    // const char* url = gsm_ota->http_config->url;
+    // size_t url_len = strlen(url);
+    char* url_ptr = "http://ota2.ismart.link/ota_firmware-1.bin";
+    //"https://bcdb8831-1995-4e0f-a891-42ccf33e4f79.mock.pstmn.io/firmware";
+    
+    //"http://ash-speed.hetzner.com/100MB.bin";
+
+    
+
+
+    //"http://ota2.ismart.link/get_file.php";
+    //"http://www.google.com";
+    
+    //"http://speedtest.dallas.linode.com/100MB-dallas.bin";
     // (char*)malloc(url_len +2);
     // sprintf(url_ptr , "%s\r\n" , url);
 
@@ -69,60 +91,174 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
 
     sprintf(url_buffer , "AT+QHTTPURL=%d,30\r\n" , strlen(url_ptr));
 
-    uart_flush(EX_UART_NUM);
-    vTaskDelay(pdMS_TO_TICKS(3000));
-
-    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[0] , 
+    int bytes = uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[0] , 
                             strlen(GSM_HTTPS_REQUESTS[0]));
 
-   
-    uart_flush(EX_UART_NUM);
+    printf("number of bytes written: %d\n" , bytes);
+
     vTaskDelay(pdMS_TO_TICKS(1000));
 
+    int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
+
+    uart_flush(EX_UART_NUM);
     uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[1] , 
                             strlen(GSM_HTTPS_REQUESTS[1]));
 
     vTaskDelay(pdMS_TO_TICKS(1000));
+
+    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
+
+    uart_flush(EX_UART_NUM);
+    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[2] , 
+                            strlen(GSM_HTTPS_REQUESTS[2]));
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
 
 
     uart_flush(EX_UART_NUM);
     uart_write_bytes(EX_UART_NUM , url_buffer , 
                             strlen(url_buffer));
 
-    uart_flush(EX_UART_NUM);
-    vTaskDelay(pdMS_TO_TICKS(600));
-
-    uart_write_bytes(EX_UART_NUM , url_ptr, strlen(url_ptr));
-
-    
-
-    uart_flush(EX_UART_NUM);
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[3] , 
-                            strlen(GSM_HTTPS_REQUESTS[3]));
+    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
 
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
 
-    
-    vTaskDelay(pdMS_TO_TICKS(1000));
 
     uart_flush(EX_UART_NUM);
+    uart_write_bytes(EX_UART_NUM , url_ptr , 
+                            strlen(url_ptr));
 
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
+
+
+    uart_flush(EX_UART_NUM);
     uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[4] , 
                             strlen(GSM_HTTPS_REQUESTS[4]));
 
+    vTaskDelay(pdMS_TO_TICKS(30000));
+
+    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
+
+    uart_flush(EX_UART_NUM);
+    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[5] , 
+                            strlen(GSM_HTTPS_REQUESTS[5]));
+
+    vTaskDelay(pdMS_TO_TICKS(30000));
+
+   len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
+    // gsm_get_file_size("ota_remote.bin");
+    unsigned long fh = gsm_open("ota_firmware.bin" , 0);
+
+    gsm_lseek(fh , 0 , 0);
+
+    uart_flush(EX_UART_NUM);
+    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[8] , 
+                            strlen(GSM_HTTPS_REQUESTS[8]));
+
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
+   len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+    char ota_buffer[1500] = {0};
+    if (len > 0) {
+        // data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Len: %d\n", len);
+        for (int i = 0 ; i < len ; i++) {
+            ota_buffer[i] = data[i];
+            printf("%c" , ota_buffer[i]);
+        }
+        ota_buffer[len] = '\0';
+    }
+    
+
+
+    //  // Find the positions of CONNECT 1000 and OK in the response
+    // char *connect_pos = strstr((char*)data, "CONNECT 1000");
+    // char *ok_pos = strstr((char*)data, "OK");
+    // if (connect_pos == NULL || ok_pos == NULL) {
+    //     printf("Error: CONNECT 1000 or OK not found in the response.\n");
+    // }
+
+    // // Calculate the length of the data between CONNECT 1000 and OK
+    // size_t data_length = ok_pos - (connect_pos + strlen("CONNECT 1000"));
+
+    // printf("act size: %d\n" , data_length);
+
+
+
+    // uart_flush(EX_UART_NUM);
+    // uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[6] , 
+    //                         strlen(GSM_HTTPS_REQUESTS[6]));
+
+    // vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // uart_flush(EX_UART_NUM);
+    // uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[7] , 
+    //                         strlen(GSM_HTTPS_REQUESTS[7]));
+
+    // vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // uart_flush(EX_UART_NUM);
+    // uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[8] , 
+    //                         strlen(GSM_HTTPS_REQUESTS[8]));
 
     // vTaskDelay(pdMS_TO_TICKS(10000));
 
     // uart_flush(EX_UART_NUM);
+    // uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[9] , 
+    //                         strlen(GSM_HTTPS_REQUESTS[9]));
 
-    // uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[5] , 
-    //                         strlen(GSM_HTTPS_REQUESTS[5]));
+    // vTaskDelay(pdMS_TO_TICKS(5000));
 
 
-   
 
-    // free(url_ptr);
+
+
+
+    free(data);
 
 }
 
@@ -148,59 +284,59 @@ esp_err_t gsm_ota_perform(gsm_spiffs_ota_partition_t* gsm_spiffs)
 }
 
 
-static void uart_event_task(void *pvParameters)
-{
-    uart_event_t event;
-    uint8_t* dtmp = (uint8_t*) malloc(RD_BUF_SIZE);
-    for (;;) {
-        //Waiting for UART event.
-        if (xQueueReceive(uart0_queue, (void *)&event, (TickType_t)portMAX_DELAY)) {
-            printf("received data\n");
-            bzero(dtmp, RD_BUF_SIZE);
-            switch (event.type) {
+// static void uart_event_task(void *pvParameters)
+// {
+//     uart_event_t event;
+//     uint8_t* dtmp = (uint8_t*) malloc(RD_BUF_SIZE);
+//     for (;;) {
+//         //Waiting for UART event.
+//         if (xQueueReceive(uart0_queue, (void *)&event, (TickType_t)portMAX_DELAY)) {
+//             printf("received data\n");
+//             bzero(dtmp, RD_BUF_SIZE);
+//             switch (event.type) {
           
-            case UART_DATA:
-                uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                char* found = strstr((char*)dtmp , "+QHTTPDL:");
-                if (found != NULL) {
+//             case UART_DATA:
+//                 uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
+//                 char* found = strstr((char*)dtmp , "+QHTTPDL:");
+//                 if (found != NULL) {
 
-                uart_flush(EX_UART_NUM);
+//                 uart_flush(EX_UART_NUM);
 
-                uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[5] , 
-                                        strlen(GSM_HTTPS_REQUESTS[5]));
-                    printf("string found: %s\n" , found);
-                }
-                printf("[DATA SIZE: %d]\t[DATA ]: %s" ,event.size, (const char*)dtmp);
-                break;
-            //Event of UART ring buffer full
-            case UART_BUFFER_FULL:
-                printf("ring buffer full");
-                uart_flush_input(EX_UART_NUM);
-                xQueueReset(uart0_queue);
-                break;
-            //Event of UART RX break detected
-            case UART_BREAK:
-                printf("uart rx break");
-                break;
-            //Event of UART parity check error
-            case UART_PARITY_ERR:
-                printf("uart parity error");
-                break;
-            //Event of UART frame error
-            case UART_FRAME_ERR:
-                printf("uart frame error");
-                break;
-            //Others
-            default:
-                printf("uart event type: %d", event.type);
-                break;
-            }
-        }
-    }
-    free(dtmp);
-    dtmp = NULL;
-    vTaskDelete(NULL);
-}
+//                 uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[5] , 
+//                                         strlen(GSM_HTTPS_REQUESTS[5]));
+//                     printf("string found: %s\n" , found);
+//                 }
+//                 printf("[DATA SIZE: %d]\t[DATA ]: %s" ,event.size, (const char*)dtmp);
+//                 break;
+//             //Event of UART ring buffer full
+//             case UART_BUFFER_FULL:
+//                 printf("ring buffer full");
+//                 uart_flush_input(EX_UART_NUM);
+//                 xQueueReset(uart0_queue);
+//                 break;
+//             //Event of UART RX break detected
+//             case UART_BREAK:
+//                 printf("uart rx break");
+//                 break;
+//             //Event of UART parity check error
+//             case UART_PARITY_ERR:
+//                 printf("uart parity error");
+//                 break;
+//             //Event of UART frame error
+//             case UART_FRAME_ERR:
+//                 printf("uart frame error");
+//                 break;
+//             //Others
+//             default:
+//                 printf("uart event type: %d", event.type);
+//                 break;
+//             }
+//         }
+//     }
+//     free(dtmp);
+//     dtmp = NULL;
+//     vTaskDelete(NULL);
+// }
 
 
 

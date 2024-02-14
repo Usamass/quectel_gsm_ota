@@ -3,6 +3,8 @@
 #include <sys/cdefs.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include "gsm_utils.h"
+#include "gsm_file_system.h"
 
 #define BUFF_SIZE 1024
 
