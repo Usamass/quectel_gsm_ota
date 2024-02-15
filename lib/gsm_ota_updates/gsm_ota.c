@@ -48,7 +48,7 @@ static char* GSM_HTTPS_REQUESTS[] = {
     "AT+QFLST=\"RAM:ota_remote.bin\"\r\n"
     "AT+QFOPEN=\"RAM:ota_remote.bin\",0\r\n",
     "AT+QFSEEK=134072,10254,1\r\n",
-    "AT+QFREAD=134072,1024\r\n",
+    "AT+QFREAD=134072,1000\r\n",
     "AT+QFCLOSE=134072\r\n",
 
 
@@ -190,28 +190,31 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
         printf("Response: %s\n", (char*)data);
     }
 
-    // gsm_get_file_size("ota_remote.bin");
-    unsigned long fh = gsm_open("ota_firmware.bin" , 0);
+    // char ota_buffer[1000] = {0};
+    // // gsm_get_file_size("ota_remote.bin");
+    // unsigned long fh = gsm_open("ota_firmware.bin" , 0);
 
-    gsm_lseek(fh , 0 , 0);
+    // gsm_lseek(fh , 0 , 1);
 
-    uart_flush(EX_UART_NUM);
-    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[8] , 
-                            strlen(GSM_HTTPS_REQUESTS[8]));
+    // gsm_read(fh , 1000 , ota_buffer);
 
-    vTaskDelay(pdMS_TO_TICKS(5000));
+//     uart_flush(EX_UART_NUM);
+//     uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[8] , 
+//                             strlen(GSM_HTTPS_REQUESTS[8]));
 
-   len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
-    char ota_buffer[1500] = {0};
-    if (len > 0) {
-        // data[len] = '\0'; // null terminator --> end of the string / array
-        printf("Len: %d\n", len);
-        for (int i = 0 ; i < len ; i++) {
-            ota_buffer[i] = data[i];
-            printf("%c" , ota_buffer[i]);
-        }
-        ota_buffer[len] = '\0';
-    }
+//     vTaskDelay(pdMS_TO_TICKS(5000));
+
+//    len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+//     char ota_buffer[1500] = {0};
+//     if (len > 0) {
+//         // data[len] = '\0'; // null terminator --> end of the string / array
+//         printf("Len: %d\n", len);
+//         for (int i = 38 ; i < len -2 ; i++) {
+//             ota_buffer[i] = data[i];
+//             printf("%c" , ota_buffer[i]);
+//         }
+//         ota_buffer[len] = '\0';
+//     }
     
 
 

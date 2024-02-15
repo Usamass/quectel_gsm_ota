@@ -2,6 +2,8 @@
 
 #define TAG "GSM_FILE_SYS"
 #define BUF_SIZE 255
+#define READ_BUF_SIZE 1500
+
 
 
 unsigned long gsm_open(char *file_name, uint8_t mode)
@@ -48,6 +50,21 @@ unsigned int gsm_read(int file_handle , int chunk_size , char* buffer) // return
 {
     unsigned int bytes_read = 0;
 
+    char command_buf  [100] = {0};
+    // uint8_t response_buf [READ_BUF_SIZE] = {0};
+    uint8_t* response_buf = (uint8_t*)malloc(READ_BUF_SIZE);
+
+    sprintf(command_buf , "AT+QFREAD=%d,%d\r\n" , file_handle , chunk_size);
+
+    if (gsm_write_command(command_buf) == -1) {
+        ESP_LOGW(TAG , "unable to write open command\n");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(5000));  // delay for uart buffer to fillup with response.
+
+    bytes_read = gsm_firmware_read(buffer , response_buf , READ_BUF_SIZE);
+
+    free(response_buf);
 
 
 

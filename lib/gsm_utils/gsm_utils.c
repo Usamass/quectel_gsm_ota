@@ -57,6 +57,23 @@ int gsm_read_response(uint8_t* buf , size_t buf_size) {  // returns number of by
 
 }
 
+int gsm_firmware_read(char* ota_buffer , uint8_t* buf , size_t buf_size) {
+    int len = uart_read_bytes(EX_UART_NUM, buf, buf_size, 0 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        // data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Length: %d\n", len);
+        for (int i = 38 ; i < len -2 ; i++) {
+            ota_buffer[i -38] = buf[i];
+            // printf("%c" , ota_buffer[i -38]);
+        }
+    }
+
+    return len;
+
+
+}
+
 
 unsigned long gsm_get_file_size(char* file) {
 
