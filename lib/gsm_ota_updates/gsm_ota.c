@@ -45,11 +45,12 @@ static char* GSM_HTTPS_REQUESTS[] = {
     
     // "AT+QFUPL=\"test_remote.bin\",300000\r\n",
     // "AT+QFLST=\"RAM:*\"\r\n",
-    "AT+QFLST=\"RAM:ota_remote.bin\"\r\n"
-    "AT+QFOPEN=\"RAM:ota_remote.bin\",0\r\n",
-    "AT+QFSEEK=134072,10254,1\r\n",
-    "AT+QFREAD=134072,1000\r\n",
-    "AT+QFCLOSE=134072\r\n",
+    // "AT+QFLST=\"RAM:ota_remote.bin\"\r\n"
+    // "AT+QFOPEN=\"RAM:ota_remote.bin\",0\r\n",
+    // "AT+QFSEEK=134072,10254,1\r\n",
+    // "AT+QFREAD=134072,1000\r\n",
+    // "AT+QFCLOSE=134072\r\n",
+    "AT+QIDEACT\r\n",
 
 
     // "AT+QFLST=\"RAM:*\"\r\n",
@@ -190,6 +191,20 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
         printf("Response: %s\n", (char*)data);
     }
 
+
+    uart_flush(EX_UART_NUM);
+    uart_write_bytes(EX_UART_NUM , GSM_HTTPS_REQUESTS[6] , 
+                            strlen(GSM_HTTPS_REQUESTS[6]));
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+   len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 20 / portTICK_PERIOD_MS);
+
+    if (len > 0) {
+        data[len] = '\0'; // null terminator --> end of the string / array
+        printf("Response: %s\n", (char*)data);
+    }
+
     // char ota_buffer[1000] = {0};
     // // gsm_get_file_size("ota_remote.bin");
     // unsigned long fh = gsm_open("ota_firmware.bin" , 0);
@@ -218,17 +233,7 @@ void gsm_begin(gsm_ota_https_config_t* gsm_ota)     // this will configure the g
     
 
 
-    //  // Find the positions of CONNECT 1000 and OK in the response
-    // char *connect_pos = strstr((char*)data, "CONNECT 1000");
-    // char *ok_pos = strstr((char*)data, "OK");
-    // if (connect_pos == NULL || ok_pos == NULL) {
-    //     printf("Error: CONNECT 1000 or OK not found in the response.\n");
-    // }
-
-    // // Calculate the length of the data between CONNECT 1000 and OK
-    // size_t data_length = ok_pos - (connect_pos + strlen("CONNECT 1000"));
-
-    // printf("act size: %d\n" , data_length);
+    
 
 
 

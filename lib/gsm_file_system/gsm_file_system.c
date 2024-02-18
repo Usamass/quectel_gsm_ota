@@ -60,7 +60,7 @@ unsigned int gsm_read(int file_handle , int chunk_size , char* buffer) // return
         ESP_LOGW(TAG , "unable to write open command\n");
     }
 
-    vTaskDelay(pdMS_TO_TICKS(5000));  // delay for uart buffer to fillup with response.
+    vTaskDelay(pdMS_TO_TICKS(3000));  // delay for uart buffer to fillup with response.
 
     bytes_read = gsm_firmware_read(buffer , response_buf , READ_BUF_SIZE);
 

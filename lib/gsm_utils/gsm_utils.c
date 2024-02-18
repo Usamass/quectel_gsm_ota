@@ -59,17 +59,85 @@ int gsm_read_response(uint8_t* buf , size_t buf_size) {  // returns number of by
 
 int gsm_firmware_read(char* ota_buffer , uint8_t* buf , size_t buf_size) {
     int len = uart_read_bytes(EX_UART_NUM, buf, buf_size, 0 / portTICK_PERIOD_MS);
+    unsigned int read_size = 0;
+    unsigned int ota_size = 0;
 
     if (len > 0) {
-        // data[len] = '\0'; // null terminator --> end of the string / array
-        printf("Length: %d\n", len);
-        for (int i = 38 ; i < len -2 ; i++) {
-            ota_buffer[i -38] = buf[i];
-            // printf("%c" , ota_buffer[i -38]);
+        int start_index = 0;
+        int end_index = 0;
+        uint8_t newlines = 0;
+        uint8_t carr_ret = 0;
+        uint8_t iterater = 0;
+        while (newlines < 2) {
+            if (buf[iterater] == '\n'){
+                newlines++;
+            } 
+            iterater++;
         }
-    }
+        start_index = iterater;
+        
+        iterater = 0;
+        while (carr_ret < 2) {
+            end_index = (len -iterater);
+            if (buf[end_index] == '\n'){
+                carr_ret++;
+            } 
+            iterater++;
+            
+        }
 
-    return len;
+
+        if (strstr((char*)buf , "CONNECT") != NULL) {
+            if (sscanf((char*)buf, "%*[^ ] %d", &read_size) == 1) {
+                printf("Size after the first space: %d\n", read_size);
+            } else {
+            printf("Error parsing the input string.\n");
+            }
+        }
+
+        
+
+        int substring_length = end_index - start_index +1;
+
+        printf("length: %d\ndata length: %d\n" , len , read_size);
+
+        // printf("substring len: %d\n" , substring_length);
+
+        // data[len] = '\0'; // null terminator --> end of the string / array
+        // for (int i = 38 ; i < len -6 ; i++) {
+        //     printf("%c" , buf[i]);
+        // }
+        
+        // for (int i = 0; i < substring_length; i++) {
+        //     // ota_buffer[i] = buf[start_index + i];
+        //     printf("%c" , buf[i +start_index]);
+        // }
+        // printf("hello world");
+
+        for (int i = start_index ; i < end_index ; i++) {
+            printf("%d\n" , buf[i]);
+
+        }
+        // printf("end_index: %d\n" , buf[end_index]);
+
+        // printf("last six bytes\n");
+
+        // printf("%d\n" , buf[len]);
+        // printf("%d\n" , buf[len -1]);
+        // printf("%d\n" , buf[len -2]);
+        // printf("%d\n" , buf[len -3]);
+        // printf("%d\n" , buf[len -4]);
+        // printf("%d\n" , buf[len -5]);
+
+
+
+        
+        
+    }
+    
+
+    return read_size;
+    // return (len -44);
 
 
 }

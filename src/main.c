@@ -24,6 +24,7 @@
 
 
 
+unsigned long firmware_size = 0; //bytes.
 int data_read , ret;
 
 ssize_t bytes_read;
@@ -74,24 +75,37 @@ void app_main(void)
     //     abort();
     // }
     
-    // ESP_LOGI(TAG, "Starting OTA");
-    // // It finds the partition where it should write the firmware
+    ESP_LOGI(TAG, "Starting OTA");
+    // It finds the partition where it should write the firmware
     // update_partition = esp_ota_get_next_update_partition(NULL);
     
     // assert(update_partition != NULL);
-    // // Reset of this partition
+    // Reset of this partition
     // ESP_ERROR_CHECK(esp_ota_begin(update_partition, OTA_SIZE_UNKNOWN, &ota_firmware_handle));
     // Temporary buffer where I write the chunks of file read from the file ota_firmware.bin.
     char ota_buffer[CHUNK_SIZE];
     memset(ota_buffer, 0, sizeof(ota_buffer));
-    do{
-        gsm_lseek(fh , offset , 1);
-        data_read = gsm_read(fh , CHUNK_SIZE , ota_buffer);
+
+
+    // gsm_lseek(fh , 0 , 1);
+    // do{
+        gsm_lseek(fh , 0 , 0);
+        // if (firmware_size < CHUNK_SIZE) {
+        //     data_read = gsm_read(fh , firmware_size , ota_buffer);
+        //     printf("inside firmware\n");
+
+        // }
+        // else {
+            data_read = gsm_read(fh , CHUNK_SIZE , ota_buffer);
+            // printf("data read: %d\n" , data_read);
+            // printf("inside firmware\n");
+        // }
+        
         // I write data from buffer to the partition
 
 
-        // ret = esp_ota_write(ota_firmware_handle, ota_buffer, data_read);
-        // // In case of failure it sends a log and exits.
+        // ret = esp_ota_write(ota_firmware_handle, (const void*)ota_buffer, data_read);
+        // In case of failure it sends a log and exits.
         // if(ret != ESP_OK){
         //     ESP_LOGE(TAG, "Firmware upgrade failed");
         //     // fclose(f);
@@ -100,20 +114,22 @@ void app_main(void)
         //     }
             
         // }
-        for (int i = 0; i < CHUNK_SIZE ; i++) {
-            // ota_buffer[i -38] = buf[i];
-            printf("%c" , ota_buffer[i]);
-        }
-        offset += CHUNK_SIZE;
-    } 
-    while(data_read > 0);
+        // firmware_size += data_read;
+        // printf("%ld\n" , firmware_size);
+        // for (int i = 0; i < data_read; i++) {
+        //     // firmware_size++;
+        //     printf("%c" , ota_buffer[i]);
+        // }
+        // offset += CHUNK_SIZE;
+    // } 
+    // while(data_read == CHUNK_SIZE);
     // ESP_ERROR_CHECK(esp_ota_end(ota_firmware_handle));
-    // fclose(f);
-    // OTA partition configuration
+    // // OTA partition configuration
     // ESP_ERROR_CHECK(esp_ota_set_boot_partition(update_partition));
     // ESP_LOGI(TAG, "Restarting...");
     // // REBOOT!!!!!
     // esp_restart();
+    // printf("firmware size: %ld\n" , firmware_size);
 
 
 
