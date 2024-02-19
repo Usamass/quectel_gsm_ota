@@ -96,10 +96,7 @@ int gsm_firmware_read(char* ota_buffer , uint8_t* buf , size_t buf_size) {
         }
 
         
-
-        int substring_length = end_index - start_index +1;
-
-        printf("length: %d\ndata length: %d\n" , len , read_size);
+        printf("length: %d\ndata length: %d\nend index: %d\n" , len , read_size , end_index);
 
         // printf("substring len: %d\n" , substring_length);
 
@@ -114,13 +111,16 @@ int gsm_firmware_read(char* ota_buffer , uint8_t* buf , size_t buf_size) {
         // }
         // printf("hello world");
 
-        for (int i = start_index ; i < end_index ; i++) {
-            printf("%d\n" , buf[i]);
+        for (int i = start_index ; i < (end_index -1) ; i++) {
+            ota_buffer[i -start_index] = buf[i];
+            ota_size++;
+
+            // printf("%c" , buf[i]);
 
         }
         // printf("end_index: %d\n" , buf[end_index]);
 
-        // printf("last six bytes\n");
+        printf("ota size: %d\n" , ota_size);
 
         // printf("%d\n" , buf[len]);
         // printf("%d\n" , buf[len -1]);
