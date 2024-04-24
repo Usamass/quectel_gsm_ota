@@ -34,9 +34,10 @@ unsigned long gsm_open(char *file_name, uint8_t mode)
 
     }
     else {
-        ESP_LOGW(TAG , "unable to get the size of file\n");
+        ESP_LOGW(TAG , "unable to open the file\n");
+        esp_restart();
 
-        // need error handling code here..
+        // need error handling code here.. may be restart.
 
     }
 
@@ -106,4 +107,29 @@ unsigned int gsm_lseek(int file_handle , unsigned long off_set , uint8_t pos) {
     return off_set;
 
 } 
+
+
+bool gsm_close(int file_handle) {
+    bool ret = 0;
+
+    char command_buf  [100] = {0};
+    uint8_t response_buf [BUF_SIZE] = {0};
+
+    sprintf(command_buf , "AT+QFCLOSE=%d\r\n" , file_handle);
+
+    if (gsm_write_command(command_buf) == -1) {
+        ESP_LOGW(TAG , "unable to write open command\n");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(1000));  // delay for uart buffer to fillup with response.
+
+    if (gsm_read_response(response_buf , BUF_SIZE) == -1) {
+        ESP_LOGW(TAG , "unable to read open command response\n");
+    }
+
+    char* str = strstr((char*)response_buf , "OK");
+    if (str != NULL) ret = 1;
+
+    return ret;
+}
 

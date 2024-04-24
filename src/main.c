@@ -11,127 +11,39 @@
 #include "gsm_file_system.h"
 
 
-const esp_partition_t* running_partition;
-const esp_partition_t* update_partition;
-esp_ota_handle_t ota_firmware_handle = 0;  /* Handler for OTA update. */
-
 #define TAG "OTA_APP"
-// #define SEND_DATA 1000
-#define CHUNK_SIZE 1000
+#define FIRMWARE_SIZE 200000 //bytes.
 
-// static const char* FIRM_FILE = "/spiffs/ota_firmware-1.bin";
-// esp_https_ota_handle_t ota_handle;
-
-
-
-unsigned long firmware_size = 0; //bytes.
-int data_read , ret;
-
-ssize_t bytes_read;
-off_t offset = 0;  // Initial offset
 
 void app_main(void)
 {
  
     gsm_ota_client_config_t ota_client = {
-        .url = "ota2.ismart.link/test_remote.bin",
+        .url = "https://ash-speed.hetzner.com/100MB.bin",
+        .timeout_ms = 60,
+        // .cert_pem = server_cert_pem_start,
     };
 
     gsm_ota_https_config_t ota_https = {
         .http_config = &ota_client,
     };
 
-    gsm_begin(&ota_https);
+    gsm_remote_firmware_conf_t remote_firmware = {
+        .file_name = "ota_firmware.bin",
+        .firmware_size = FIRMWARE_SIZE,
+    };
+
+    gsm_begin();
+    printf("ready to download firmware!\n");
+    gsm_ota_begin(&ota_https , &remote_firmware);
+
+    // gsm_ota_perform(&remote_firmware);
 
 
-
-    // file_system_init();
-
-    // struct stat st;
-    // if (stat("/spiffs/ota_firmware-1.bin", &st) == 0)
-    // {
-    //     printf(">> ota_firmware.bin. %ld\n", st.st_size);
-    // }
-    // else
-    // {
-    //     printf(">> ota_firmware.bin NOT found\n");
-    // }
-
-    running_partition = esp_ota_get_running_partition();
-    update_partition = esp_ota_get_next_update_partition(NULL);
-
-    ESP_LOGI(TAG , "running partition: %s \t update partition: %s" , running_partition->label , update_partition->label);
-
-    // gsm_get_file_size("ota_remote.bin");
-    unsigned long fh = gsm_open("ota_firmware.bin" , 0);
+   
 
 
-    
-
-    // FILE* f = fopen(FIRM_FILE , "r");
-
-    // if (f == NULL) {
-    //     ESP_LOGI(TAG , "unable to open file\n");
-    //     abort();
-    // }
-    
-    ESP_LOGI(TAG, "Starting OTA");
-    // It finds the partition where it should write the firmware
-    update_partition = esp_ota_get_next_update_partition(NULL);
-    
-    assert(update_partition != NULL);
-    // Reset of this partition
-    ESP_ERROR_CHECK(esp_ota_begin(update_partition, OTA_SIZE_UNKNOWN, &ota_firmware_handle));
-    // Temporary buffer where I write the chunks of file read from the file ota_firmware.bin.
-    char ota_buffer[CHUNK_SIZE];
-    memset(ota_buffer, 0, sizeof(ota_buffer));
-
-
-    // gsm_lseek(fh , 0 , 1);
-    do{
-        gsm_lseek(fh , offset , 0);
-        // if (firmware_size < CHUNK_SIZE) {
-        //     data_read = gsm_read(fh , firmware_size , ota_buffer);
-        //     printf("inside firmware\n");
-
-        // }
-        // else {
-            data_read = gsm_read(fh , CHUNK_SIZE , ota_buffer);
-            // printf("data read: %d\n" , data_read);
-            // printf("inside firmware\n");
-        // }
-        
-        // I write data from buffer to the partition
-
-
-        ret = esp_ota_write(ota_firmware_handle, (const void*)ota_buffer, data_read);
-        // In case of failure it sends a log and exits.
-        if(ret != ESP_OK){
-            ESP_LOGE(TAG, "Firmware upgrade failed");
-            // fclose(f);
-            while (1) {
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-            }
-            
-        }
-        // firmware_size += data_read;
-        // printf("%ld\n" , firmware_size);
-        // for (int i = 0; i < data_read; i++) {
-        //     // firmware_size++;
-        //     printf("%c" , ota_buffer[i]);
-        // }
-        offset += CHUNK_SIZE;
-    } 
-    while(data_read == CHUNK_SIZE);
-    ESP_ERROR_CHECK(esp_ota_end(ota_firmware_handle));
-    // // OTA partition configuration
-    ESP_ERROR_CHECK(esp_ota_set_boot_partition(update_partition));
-    ESP_LOGI(TAG, "Restarting...");
-    // // REBOOT!!!!!
-    esp_restart();
-    // printf("firmware size: %ld\n" , firmware_size);
-
-
+   
 
     
 }

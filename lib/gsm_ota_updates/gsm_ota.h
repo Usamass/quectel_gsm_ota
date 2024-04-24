@@ -3,11 +3,12 @@
 #include <sys/cdefs.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include <esp_system.h>
 #include "gsm_utils.h"
 #include "gsm_file_system.h"
 
 #define BUFF_SIZE 1024
-
+#define CHUNK_SIZE 1000
 
 
 typedef enum 
@@ -19,11 +20,20 @@ typedef enum
 
 }Quectel_command;
 
+typedef enum 
+{
+    HTTP_DOWNLOADED_SIZE,
+    HTTP_TOTAL_SIZE,
+    HTTP_RESPONSE_CODE
+
+
+}http_server_resp_e;
+
 
 typedef struct 
 {
     const char* url;
-    const char* cert_pem;
+    const uint8_t* cert_pem;
     int timeout_ms;
 
 }gsm_ota_client_config_t;
@@ -41,13 +51,12 @@ typedef struct
 typedef struct 
 {
     const char* file_name;
-    char data_buffer[BUFF_SIZE];
+    unsigned long firmware_size;
 
+}gsm_remote_firmware_conf_t;
 
-}gsm_spiffs_ota_partition_t;
-
-void gsm_begin(gsm_ota_https_config_t*); 
-esp_err_t gsm_ota_begin(gsm_ota_https_config_t* , gsm_spiffs_ota_partition_t*);
-esp_err_t gsm_ota_perform(gsm_spiffs_ota_partition_t*);
+void gsm_begin(); 
+esp_err_t gsm_ota_begin(gsm_ota_https_config_t* , gsm_remote_firmware_conf_t*);
+esp_err_t gsm_ota_perform(gsm_remote_firmware_conf_t*);
 
 
